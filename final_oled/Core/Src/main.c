@@ -28,6 +28,11 @@
 #include "ssd1306_fonts.h"
 #include <string.h>
 
+#include "utils.h"
+#include <stdio.h>
+
+#include "ssd1306_tests.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -117,7 +122,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	ssd1306_TestAll();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
