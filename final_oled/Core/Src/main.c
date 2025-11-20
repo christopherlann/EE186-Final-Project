@@ -32,6 +32,9 @@
 #include <stdio.h>
 
 #include "ssd1306_tests.h"
+#include "system_state.h"
+#include "button.h"
+#include "oled.h"
 
 /* USER CODE END Includes */
 
@@ -76,9 +79,6 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-	char myText[] = "Hello World";
-	char retVal;
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -103,14 +103,11 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
-  // Initialize OLED
-  ssd1306_Init();
+  ssd1306_Init(); 				// Initialize OLED display
 
-  // Place cursor
-  ssd1306_SetCursor(5, 5);
-  // Write string to buffer
-  retVal = ssd1306_WriteString(myText, Font_7x10, White);
-  // Write buffer to screen
+  // Display startup message
+  ssd1306_SetCursor(5, 5);	  	// Place cursor
+  ssd1306_WriteString("Bike Drifter", Font_7x10, White);
   ssd1306_UpdateScreen();
 
   /* USER CODE END 2 */
@@ -118,11 +115,30 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-
   while (1)
   {
+	  handle_button();			// Execute button logic when IRQ fires
+
+//	  read_accelerometer();		// TODO
+
+	  if (refreshDisplay) {
+		  refreshDisplay = 0;
+
+		  switch (currentMode) {
+		  	  case MODE_ACCEL:
+		  		  oled_accel_mode();
+		  		  break;
+		  	  case MODE_SOUND:
+		  		  oled_speaker_mode();
+		  		  break;
+		  	  case MODE_VOLUME:
+		  		  oled_volume_mode();
+		  		  break;
+	  }
+}
+
     /* USER CODE END WHILE */
-	ssd1306_TestAll();
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -173,6 +189,15 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if (GPIO_Pin == BUTTON_Pin)
+    {
+    	button_SetIRQFlag();	// Set button flag high
+//        printf("button interrupt\r\n");	// debug
+    }
+}
 
 /* USER CODE END 4 */
 
