@@ -82,6 +82,101 @@ uint8_t flg_dma_done;
   * @brief  The application entry point.
   * @retval int
   */
+
+
+uint8_t *ptrDrift[3];
+uint32_t samplesDrift[3];
+
+int initSpeaker() {
+	  HAL_TIM_Base_Start(&htim6);
+
+	    // DRIFT 0
+	    uint8_t *p = (uint8_t *)&__USER_DATA;
+	    p += 40;
+	    samplesDrift[0] = p[0]
+	                    + (p[1] << 8)
+	                    + (p[2] << 16)
+	                    + (p[3] << 24);
+	    samplesDrift[0] /= 2;
+	    p += 4;
+	    ptrDrift[0] = p;
+
+	    // DRIFT 1
+	    uint8_t *q = (uint8_t *)&__USER_DATA1;
+	    q += 40;
+	    samplesDrift[1] = q[0]
+	                    + (q[1] << 8)
+	                    + (q[2] << 16)
+	                    + (q[3] << 24);
+	    samplesDrift[1] /= 2;
+	    q += 4;
+	    ptrDrift[1] = q;
+
+	    // DRIFT 2
+	    uint8_t *r = (uint8_t *)&__USER_DATA2;
+	    r += 40;
+	    samplesDrift[2] = r[0]
+	                    + (r[1] << 8)
+	                    + (r[2] << 16)
+	                    + (r[3] << 24);
+	    samplesDrift[2] /= 2;
+	    r += 4;
+	    ptrDrift[2] = r;
+
+
+}
+
+void playDrift(int driftIndex, float volumeScale)
+{
+    int16_t *pp  = (int16_t *)ptrDrift[driftIndex];
+    int samples  = samplesDrift[driftIndex];
+
+    uint16_t dmaBuf[2][BUFFERSIZE];
+    int bank = 0;
+
+    flg_dma_done = 1;
+    int count = samples;
+
+	// load audio from falsh memory
+    while (count > 0)
+    {
+        int blksize = MIN(count, BUFFERSIZE);
+
+   		// load current block
+        for (int i = 0; i < blksize; i++)
+        {
+            int16_t v0 = *pp;
+			pp++;
+            int32_t v = v0 >> 4;      
+            v += 2047;               
+            v = (float)v * volumeScale;
+            dmaBuf[bank][i] = (int32_t)v & 0x0FFF;
+        }
+
+
+        while (!flg_dma_done) {
+            __NOP();
+        }
+
+        flg_dma_done = 0;
+
+		// start playing
+        HAL_DAC_Start_DMA(
+            &hdac1,
+            DAC_CHANNEL_1,
+            (uint32_t*)dmaBuf[bank],
+            blksize,
+            DAC_ALIGN_12B_R
+        );
+
+        bank = !bank;
+        count -= blksize;
+    }
+
+    HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
+}
+
+
 int main(void)
 {
 
@@ -112,94 +207,13 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_Base_Start(&htim6);
 
  // HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*)musi, blksize, DAC_ALIGN_12B_R);
 
-  uint8_t *p = (uint8_t *)&__USER_DATA;
-  p += 40;
-  uint32_t samples1 = *p + (*(p+1) * 256)  + (*(p+2) * 256 * 256)  + (*(p+3) * 256 * 256 * 256);
-  samples1 /= 2;
-  p += 4;
 
-  uint8_t *q = (uint8_t *)&__USER_DATA1;
-  q += 40;
-  uint32_t samples2 = *q + (*(q+1) * 256)  + (*(q+2) * 256 * 256)  + (*(q+3) * 256 * 256 * 256);
-  samples2 /= 2;
-   q += 4;
-
-   uint8_t *r = (uint8_t *)&__USER_DATA2;
-    r += 40;
-    uint32_t samples3 = *r + (*(r+1) * 256)  + (*(r+2) * 256 * 256)  + (*(r+3) * 256 * 256 * 256);
-    samples3 /= 2;
-     r += 4;
-  /* USER CODE END 2 */
-
-  int driftPick = 0;
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  int16_t *pp;
   while (1)
   {
 
-	  //if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET) {
-		  // beep
-
-	      // swap for case statment
-	      int samples =0;
-	      if (driftPick == 0){
-	    	  pp = (int16_t *)p;
-	    	  samples = samples1;
-	      }
-	      if (driftPick == 1){
-	    	  pp = (int16_t *)q;
-	    	  samples = samples2;
-	      }
-	      if (driftPick == 2){
-	     	 pp = (int16_t *)r;
-	     	 samples = samples3;
-	     }
-
-
-
-
-
-		  uint16_t dmaBuf[2][BUFFERSIZE];
-		  int bank = 0;
-
-		  flg_dma_done = 1;
-		  int count = samples;
-		  while (0 < count) {
-			  const int blksize = MIN(samples, BUFFERSIZE);
-
-
-			  for(int i=0; i< blksize; i++) {
-				  int16_t v0 = *pp;
-				  pp++;
-				  int32_t v = v0;
-				  v >>= 4;
-				  v += 2047;
-
-				// sscaling
-				  v *=.2;
-
-				  dmaBuf[bank][i] = v & 0x0fff;
-			  }
-
-			  // wait for DMA complete
-			  while(!flg_dma_done) {
-				  __NOP();
-				  // Here should be where we update DRFITPICK
-			  }
-
-			  flg_dma_done = 0;
-			  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*)dmaBuf[bank], blksize, DAC_ALIGN_12B_R);
-
-			  bank = !bank;
-			  count -= blksize;
-		  }
-
-		  HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
 	  }
 
 
@@ -644,3 +658,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
