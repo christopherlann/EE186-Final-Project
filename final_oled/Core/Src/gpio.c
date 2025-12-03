@@ -40,10 +40,8 @@
      PF2   ------> I2C2_SMBA
      PF7   ------> SAI1_MCLK_B
      PC0   ------> ADCx_IN1
-     PC1   ------> ADCx_IN2
      PC2   ------> ADCx_IN3
      PC3   ------> ADCx_IN4
-     PA0   ------> ADCx_IN5
      PA1   ------> ADCx_IN6
      PA3   ------> ADCx_IN8
      PC4   ------> ADCx_IN13
@@ -120,11 +118,11 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF13_SAI1;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BUTTON_Pin */
-  GPIO_InitStruct.Pin = BUTTON_Pin;
+  /*Configure GPIO pin : USER_BUTTON_Pin */
+  GPIO_InitStruct.Pin = USER_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(USER_BUTTON_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PF0 PF1 PF2 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2;
@@ -142,16 +140,22 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF13_SAI1;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC0 PC1 PC2 PC3
-                           PC4 PC5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5;
+  /*Configure GPIO pins : PC0 PC2 PC3 PC4
+                           PC5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
+                          |GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA0 PA1 PA3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_3;
+  /*Configure GPIO pin : BUTTON_Pin */
+  GPIO_InitStruct.Pin = BUTTON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA1 PA3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_3;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -330,8 +334,8 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
 }
 

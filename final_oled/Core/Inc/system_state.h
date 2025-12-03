@@ -22,9 +22,10 @@ typedef enum {
 extern DisplayMode_t currentMode;
 
 extern uint8_t accelView;
-//extern uint8_t soundIndex;
-//extern uint8_t volumeLevel;
+extern uint8_t driftIndex;
+extern float volumeScale;
 extern uint8_t refreshDisplay;
+extern uint8_t playSound;
 
 
 #endif /* INC_SYSTEM_STATE_H_ */

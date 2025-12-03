@@ -18,8 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dac.h"
+#include "dma.h"
 #include "usart.h"
 #include "spi.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -35,6 +38,7 @@
 #include "system_state.h"
 #include "button.h"
 #include "oled.h"
+#include "speaker.h"
 
 /* USER CODE END Includes */
 
@@ -99,11 +103,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_LPUART1_UART_Init();
   MX_SPI1_Init();
+  MX_DAC1_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 
   ssd1306_Init(); 				// Initialize OLED display
+
+  initSpeaker();				// Initialize speaker
 
   // Display startup message
   ssd1306_SetCursor(5, 5);	  	// Place cursor
@@ -117,10 +126,14 @@ int main(void)
 
   while (1)
   {
-	  handle_button();			// Execute button logic when IRQ fires
+
+	  // 1. Determine button press and set flags for OLED, speaker, and accel
+	  handle_button();
 
 //	  read_accelerometer();		// TODO
 
+
+	  // 2. Refresh the display to show new message
 	  if (refreshDisplay) {
 		  refreshDisplay = 0;
 
@@ -134,8 +147,15 @@ int main(void)
 		  	  case MODE_VOLUME:
 		  		  oled_volume_mode();
 		  		  break;
+		  }
 	  }
-}
+
+	  // 3. Play drift sound
+	  if (playSound) {
+		  playSound = 0;
+		  playDrift(driftIndex, volumeScale);
+	  }
+
 
     /* USER CODE END WHILE */
 

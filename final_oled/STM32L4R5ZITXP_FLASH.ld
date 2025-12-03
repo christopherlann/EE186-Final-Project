@@ -49,8 +49,17 @@ MEMORY
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 192K
   RAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 64K
   RAM3    (xrw)    : ORIGIN = 0x20040000,   LENGTH = 384K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 2048K
+  FLASH     (rx)    : ORIGIN = 0x8000000,   LENGTH = 2048K - 768K
+  FLASH1    (rx)    : ORIGIN = 0x81C0000,   LENGTH = 256K
+  FLASH2    (rx)    : ORIGIN = 0x8180000,   LENGTH = 256K
+  FLASH3    (rx)    : ORIGIN = 0x8140000,   LENGTH = 256K
 }
+
+
+
+__USER_DATA = ORIGIN(FLASH1);
+__USER_DATA1 = ORIGIN(FLASH2);
+__USER_DATA2 = ORIGIN(FLASH3);
 
 /* Sections */
 SECTIONS
@@ -180,6 +189,26 @@ SECTIONS
     . = ALIGN(8);
   } >RAM3
 
+  .user_data : 
+  {
+    . = ALIGN(4);
+	KEEP(*(.user_data))
+    . = ALIGN(4);  	
+  } > FLASH1
+  
+   .user_data1 : 
+  {
+    . = ALIGN(4);
+	KEEP(*(.user_data1))
+    . = ALIGN(4);  	
+  } > FLASH2
+  
+  .user_data2 : 
+  {
+    . = ALIGN(4);
+	KEEP(*(.user_data2))
+    . = ALIGN(4);  	
+  } > FLASH3
   /* Remove information from the compiler libraries */
   /DISCARD/ :
   {

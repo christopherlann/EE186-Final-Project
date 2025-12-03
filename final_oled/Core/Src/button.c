@@ -16,9 +16,12 @@
 
 // State variables
 
-static ButtonState buttonState = BUTTON_IDLE;
+static ButtonState_t buttonState = BUTTON_IDLE;
 static uint32_t debounceStart = 0;
 static uint32_t pressStart = 0;
+
+static uint8_t clickCount = 0;
+static uint32_t lastReleaseTime = 0;
 
 static volatile bool buttonIRQFlag = false;
 
@@ -39,8 +42,6 @@ void button_SetIRQFlag(void)
  */
 void handle_short_press() {
 
-//    printf("short press\r\n");	// debug
-
     switch (currentMode) {
 
 		case MODE_ACCEL:
@@ -51,8 +52,9 @@ void handle_short_press() {
 
 		case MODE_SOUND:
 			// Cycle between different sounds
-//	        soundIndex = (soundIndex + 1) % NUM_SOUNDS;
+	        driftIndex = (driftIndex + 1) % 3;
 			refreshDisplay = 1;
+			playSound = 1;
 			break;
 
 		case MODE_VOLUME:
@@ -69,8 +71,6 @@ void handle_short_press() {
  * Cycles between different display modes
  */
 void handle_long_press() {
-
-//    printf("long press\r\n");	// debug
 
     switch (currentMode) {
 
@@ -100,79 +100,77 @@ void handle_long_press() {
  * Debounce state machine
  */
 void handle_button(void)
-{
-	// Get accurate time
-    uint32_t now = HAL_GetTick();
+	{
+	    uint32_t now = HAL_GetTick();
 
+	    switch (buttonState)
+	    {
+	        case BUTTON_IDLE:
+	            if (buttonIRQFlag)
+	            {
+	                buttonIRQFlag = 0;
+	                debounceStart = now;
+	                buttonState = BUTTON_DEBOUNCE;
+	            }
+	            break;
 
-    // State machine for debouncing
-    switch (buttonState)
-    {
-    	// Waiting state
-        case BUTTON_IDLE:
-            // Interrupt detected rising edge
-            if (buttonIRQFlag)
-            {
-                buttonIRQFlag = false;
-                debounceStart = now;			// Start debounce time
-                buttonState = BUTTON_DEBOUNCE;
-            }
-            break;
+	        case BUTTON_DEBOUNCE:
+	            if (now - debounceStart >= DEBOUNCE_MS)
+	            {
+	                if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1) == GPIO_PIN_RESET)   // active low
+	                {
+	                    pressStart = now;
+	                    buttonState = BUTTON_PRESSED;
+	                }
+	                else
+	                {
+	                    buttonState = BUTTON_IDLE;
+	                }
+	            }
+	            break;
 
-        // Debounce state
-        case BUTTON_DEBOUNCE:
-            // Wait for debounce time
-            if (now - debounceStart >= DEBOUNCE_MS)
-            {
-                // Check button state after debouncing time
-                if (HAL_GPIO_ReadPin(BUTTON_GPIO_Port, BUTTON_Pin) == GPIO_PIN_SET)
-                {
-                    pressStart = now;
-                    buttonState = BUTTON_PRESSED;
-                }
-                else
-                {
-                    // Return to idle for a bounce
-                    buttonState = BUTTON_IDLE;
-                }
-            }
-            break;
+	        case BUTTON_PRESSED:
+	            if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1) == GPIO_PIN_SET)
+	            {
+	                buttonState = BUTTON_RELEASED;
+	            }
+	            break;
 
-        // Pressed state
-        case BUTTON_PRESSED:
-            // Button has been verified as pressed.
-            // Check if released.
-            if (HAL_GPIO_ReadPin(BUTTON_GPIO_Port, BUTTON_Pin) == GPIO_PIN_RESET)
-            {
-                buttonState = BUTTON_RELEASED;
-            }
-            break;
+	        case BUTTON_RELEASED:
+	        {
+	            uint32_t duration = now - pressStart;
 
-        // Released state
-        case BUTTON_RELEASED:
-        {
-            uint32_t pressDuration = now - pressStart;
+	            if (duration >= LONG_PRESS_MS)
+	            {
+	                printf("Long Press\r\n");
+	                clickCount = 0;
+	                handle_long_press();
+	            }
+	            else
+	            {
+	                clickCount++;
+	                lastReleaseTime = now;
+	            }
 
-            if (pressDuration >= LONG_PRESS_MS)
-            {
-            	// Long press
-            	handle_long_press();
-            }
-            else
-            {
-            	// Short press
-            	handle_short_press();
-            }
+	            buttonState = BUTTON_IDLE;
+	            break;
+	        }
 
-            buttonState = BUTTON_IDLE;
-            break;
-        }
+	        default:
+	            buttonState = BUTTON_IDLE;
+	            break;
+	    }
 
-        // Default state
-        default:
-            buttonState = BUTTON_IDLE;
-            break;
-    }
-}
-
-
+	    // single/double click
+	    if (clickCount > 0 && (now - lastReleaseTime > DOUBLE_CLICK_MS))
+	    {
+	        if (clickCount == 1) {
+	            printf("Single Click\r\n");
+	        	handle_short_press();
+	        }
+	        else {
+	            printf("Double Click\r\n");
+	        }
+	        clickCount = 0;
+	    }
+	}

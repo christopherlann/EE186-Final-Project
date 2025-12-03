@@ -40,11 +40,23 @@ void oled_accel_mode() {
 // Call this function to display and set speaker mode
 void oled_speaker_mode() {
 	ssd1306_Fill(Black);
+
 	ssd1306_SetCursor(5,5);
 
-	ssd1306_WriteString("Speaker 1", Font_7x10, White);
+    switch(driftIndex) {
+    	case 0:
+    		ssd1306_WriteString("Drift 1:", Font_7x10, White);
+    		break;
+		case 1:
+			ssd1306_WriteString("Drift 2:", Font_7x10, White);
+			break;
+		case 2:
+			ssd1306_WriteString("Drift 3:", Font_7x10, White);
+			break;
+	}
 
 	ssd1306_UpdateScreen();
+
 }
 
 // Call this function to display and set volume level

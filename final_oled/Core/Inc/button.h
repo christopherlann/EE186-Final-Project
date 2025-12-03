@@ -23,11 +23,15 @@ typedef enum {
     BUTTON_DEBOUNCE,
     BUTTON_PRESSED,
     BUTTON_RELEASED
-} ButtonState;
+} ButtonState_t;
 
 
-#define DEBOUNCE_MS     50
-#define LONG_PRESS_MS   600
+//#define DEBOUNCE_MS     50
+//#define LONG_PRESS_MS   600
+
+#define DEBOUNCE_MS        50
+#define LONG_PRESS_MS     800
+#define DOUBLE_CLICK_MS   300
 
 
 
