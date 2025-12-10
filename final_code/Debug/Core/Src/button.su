@@ -1,0 +1,5 @@
+../Core/Src/button.c:34:6:button_SetIRQFlag	4	static
+../Core/Src/button.c:45:6:handle_short_press	8	static
+../Core/Src/button.c:91:6:handle_long_press	8	static
+../Core/Src/button.c:142:6:handle_double_press	4	static
+../Core/Src/button.c:162:6:handle_button	16	static

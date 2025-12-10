@@ -1,2 +1,0 @@
-../Core/Src/speaker.c:33:6:initSpeaker	24	static
-../Core/Src/speaker.c:74:6:playDrift	80056	static,ignoring_inline_asm

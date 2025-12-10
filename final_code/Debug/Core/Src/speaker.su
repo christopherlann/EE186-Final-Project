@@ -1,0 +1,3 @@
+../Core/Src/speaker.c:38:6:initSpeaker	24	static
+../Core/Src/speaker.c:82:6:loadDrift	32	static
+../Core/Src/speaker.c:109:6:playDrift	16	static
